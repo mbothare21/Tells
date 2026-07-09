@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+
+html, body { margin: 0; height: 100%; }
+body {
+  background:
+    radial-gradient(1200px 600px at 85% -15%, rgba(55,224,196,.05), transparent 60%),
+    radial-gradient(900px 500px at 5% 115%, rgba(90,162,245,.05), transparent 60%),
+    #080a10;
+  color: #e8ecf5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* email body styling injected via dangerouslySetInnerHTML */
+.em-body p { margin: 0 0 12px; }
+.em-btn { display:inline-block; background:#0067c0; color:#fff; padding:9px 18px; border-radius:6px; font-weight:600; text-decoration:none; font-size:13px; margin:4px 0; cursor:pointer; }
+.em-link { color:#5aa2f5; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+
+/* scrollbars */
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: #28324a; border-radius: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
