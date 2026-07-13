@@ -20,6 +20,8 @@ const PATHS: Record<string, React.ReactNode> = {
   globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18" /></>,
   doc: <><path d="M7 3h7l4 4v14H7z" /><path d="M14 3v4h4" /></>,
   bot: <><rect x="5" y="8" width="14" height="10" rx="2" /><path d="M12 8V5M9 13h.01M15 13h.01" /></>,
+  expand: <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />,
+  shrink: <path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5" />,
 };
 
 export function Icon({ name, className }: IconProps) {

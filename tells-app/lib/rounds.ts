@@ -27,12 +27,12 @@ export const ROUNDS: RoundMeta[] = [
     slug: "round-2",
     title: "The data gate",
     ready: true,
-    blurb: "A batch of records is about to be fed to an AI. Choose the controls that let it run without leaking anything it shouldn't.",
+    blurb: "Three different AI systems, three kinds of data. For each, arm the controls that actually fit — a generic checklist won't do.",
     competency: "Protecting the data you give to AI",
     takeaway:
-      "A polite instruction isn't a control. Only redaction, no-logging and no-retention actually stop personal data leaking to a model.",
+      "The right guardrails depend on the system: strip what the model doesn't need, keep secrets and IP out, keep humans accountable — and a written instruction is never a real control. The same control (logging) can be a leak in one system and a requirement in another.",
     focus:
-      "For every safeguard, ask one question: does it change what the model actually receives, logs, or keeps?",
+      "Match controls to the specific data flow: what must the model not receive, what must it not keep, and who must stay accountable?",
   },
   {
     n: 3,
