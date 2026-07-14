@@ -1,3 +1,7 @@
+// When true, a round only unlocks once the previous one is cleared. Turned off for now
+// (all rounds playable); flip back to true to enforce sequential play at a live event.
+export const SEQUENTIAL_LOCK = false;
+
 export interface RoundMeta {
   n: number;
   slug: string;

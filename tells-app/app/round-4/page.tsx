@@ -76,7 +76,7 @@ export default function Round4() {
           "Your first answer locks in, so read the whole case before you choose.",
           "You score +250 for each correct diagnosis.",
         ]}
-        onStart={start} startLabel="Open the files" />
+        onStart={start} startLabel="Start" />
     );
 
   if (phase === "debrief") {
@@ -91,7 +91,7 @@ export default function Round4() {
       });
     return (
       <DebriefOverlay roundNum={4}
-        headline={correct === CASES.length ? "All sound calls" : `${correct} of ${CASES.length} right`}
+        headline={correct === CASES.length ? "All correct" : `${correct} of ${CASES.length} correct`}
         intro="Knowing why an automated decision is unfair, unexplained, or invasive is the first step to fixing it."
         stats={[
           { v: String(score), l: "score", color: "text-acc" },

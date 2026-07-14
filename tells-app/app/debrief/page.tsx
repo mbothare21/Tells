@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ROUNDS } from "@/lib/rounds";
 import { useGame } from "@/lib/gameState";
+import { useAuth } from "@/lib/auth";
+import { getLeaderboard, upsertScore, LBEntry } from "@/lib/leaderboard";
 import { Icon } from "@/components/Icon";
 
 type Band = "strong" | "solid" | "work";
@@ -21,17 +24,100 @@ const BAND_META: Record<Band, { label: string; cls: string }> = {
 
 export default function DebriefPage() {
   const game = useGame();
+  const { user, penalty, disqualified } = useAuth();
+  const [tab, setTab] = useState<"results" | "leaderboard">("leaderboard");
+
+  const effective = Math.max(0, game.totalScore - penalty);
+
+  // persist this player's score so the leaderboard survives across logins on this device
+  useEffect(() => {
+    if (user) upsertScore(user.username, user.name, effective, disqualified);
+  }, [user, effective, disqualified]);
+
+  const board = getLeaderboard(user ? { username: user.username, name: user.name, score: effective, dq: disqualified } : null);
+
+  return (
+    <main className="mx-auto max-w-2xl px-5 py-12">
+      <div className="text-center mb-5">
+        <span className="font-mono text-[11px] tracking-[1.5px] uppercase text-acc">Your results</span>
+        <h1 className="text-3xl font-bold tracking-tight mt-2">Results</h1>
+      </div>
+
+      {/* tabs */}
+      <div className="flex gap-1 p-1 rounded-xl border border-line2 bg-panel2 mb-6 max-w-[340px] mx-auto">
+        {(["leaderboard", "results"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 text-[13px] font-semibold py-2 rounded-lg transition ${
+              tab === t ? "bg-gradient-to-b from-acc to-acc2 text-[#04221d]" : "text-ink2 hover:text-ink"
+            }`}
+          >
+            {t === "leaderboard" ? "Leaderboard" : "How you did"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "leaderboard" ? <Leaderboard board={board} /> : <HowYouDid />}
+
+      <div className="text-center mt-6 flex gap-2.5 justify-center flex-wrap">
+        <Link href="/" className="text-sm px-5 py-2.5 rounded-[10px] border border-line2 text-ink hover:border-acc2">
+          All rounds
+        </Link>
+      </div>
+    </main>
+  );
+}
+
+/* ---------------- Leaderboard tab ---------------- */
+function Leaderboard({ board }: { board: LBEntry[] }) {
+  const medal = ["#f5c451", "#c7ccd6", "#cd7f45"];
+  return (
+    <div className="bg-panel border border-line rounded-2xl overflow-hidden">
+      <div className="px-4 py-3 border-b border-line text-[11px] font-mono uppercase tracking-wide text-ink3">
+        Leaderboard
+      </div>
+      {board.map((e, i) => (
+        <div
+          key={e.name + i}
+          className={`flex items-center gap-3 px-4 py-2.5 border-b border-line last:border-0 ${
+            e.you ? "bg-acc/10" : ""
+          }`}
+        >
+          <div
+            className="w-7 text-center font-mono font-bold text-[14px] shrink-0"
+            style={{ color: i < 3 && !e.dq ? medal[i] : undefined }}
+          >
+            {i + 1}
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-[14px] font-semibold">{e.name}</span>
+            {e.you && <span className="ml-2 text-[10px] font-mono uppercase tracking-wide text-acc">you</span>}
+          </div>
+          {e.dq ? (
+            <span className="text-[11px] font-mono uppercase text-danger">disqualified</span>
+          ) : (
+            <span className="font-mono font-bold text-[14px] text-acc">{e.score.toLocaleString()}</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- How you did tab ---------------- */
+function HowYouDid() {
+  const game = useGame();
+  const { penalty } = useAuth();
   const done = ROUNDS.filter((r) => game.isComplete(r.slug));
-  const notDone = ROUNDS.filter((r) => !game.isComplete(r.slug));
 
   const rated = done.map((r) => ({ meta: r, res: game.results[r.slug], band: bandOf(game.results[r.slug].accuracy) }));
   const strengths = rated.filter((x) => x.band === "strong" || x.band === "solid");
   const focus = rated.filter((x) => x.band === "work");
-  const avgAccuracy = done.length
-    ? Math.round(done.reduce((s, r) => s + game.results[r.slug].accuracy, 0) / done.length)
-    : 0;
+  const avgAccuracy = done.length ? Math.round(done.reduce((s, r) => s + game.results[r.slug].accuracy, 0) / done.length) : 0;
   const totalBreaches = done.reduce((s, r) => s + (game.results[r.slug].breaches || 0), 0);
-  const allDone = notDone.length === 0 && done.length > 0;
+  const effective = Math.max(0, game.totalScore - penalty);
+  const allDone = done.length === ROUNDS.length;
 
   const verdict = !done.length
     ? "Play a round to build your report."
@@ -42,27 +128,21 @@ export default function DebriefPage() {
     : `Good instincts in ${strengths.length} area${strengths.length === 1 ? "" : "s"}; ${focus.length} to sharpen up.`;
 
   return (
-    <main className="mx-auto max-w-2xl px-5 py-12">
-      <div className="text-center mb-6">
-        <span className="font-mono text-[11px] tracking-[1.5px] uppercase text-acc">Operative assessment</span>
-        <h1 className="text-3xl font-bold tracking-tight mt-2">Mission debrief</h1>
-        <p className="text-ink2 mt-2 text-[14px] max-w-md mx-auto">{verdict}</p>
-      </div>
+    <>
+      <p className="text-ink2 text-[14px] text-center max-w-md mx-auto mb-5">{verdict}</p>
 
-      {/* headline stats */}
       <div className="flex gap-3 mb-6 flex-wrap">
-        <Stat v={game.totalScore.toLocaleString()} l="total score" color="text-acc" />
+        <Stat v={effective.toLocaleString()} l="total score" color="text-acc" />
         <Stat v={`${done.length}/${ROUNDS.length}`} l="rounds cleared" />
         <Stat v={`${avgAccuracy}%`} l="avg accuracy" color={avgAccuracy >= 80 ? "text-ok" : ""} />
-        <Stat v={String(totalBreaches)} l="hijacks / leaks" color={totalBreaches ? "text-crit" : "text-ok"} />
+        <Stat v={String(totalBreaches)} l="issues missed" color={totalBreaches ? "text-crit" : "text-ok"} />
       </div>
 
       {done.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {/* strengths */}
           <div className="rounded-2xl border border-ok/30 bg-ok/5 p-4">
             <div className="flex items-center gap-1.5 text-ok font-mono uppercase tracking-wide text-[10px] font-semibold mb-2.5">
-              <Icon name="check" /> Your strong zones
+              <Icon name="check" /> What you did well
             </div>
             {strengths.length ? (
               <ul className="flex flex-col gap-2.5">
@@ -80,7 +160,6 @@ export default function DebriefPage() {
             )}
           </div>
 
-          {/* focus areas */}
           <div className="rounded-2xl border border-warn/30 bg-warn/5 p-4">
             <div className="flex items-center gap-1.5 text-warn font-mono uppercase tracking-wide text-[10px] font-semibold mb-2.5">
               <Icon name="alert" /> Work on these
@@ -101,7 +180,6 @@ export default function DebriefPage() {
         </div>
       )}
 
-      {/* what the game taught you */}
       <div className="rounded-2xl border border-acc/30 bg-acc/5 p-4 mb-6">
         <div className="flex items-center gap-1.5 text-acc font-mono uppercase tracking-wide text-[10px] font-semibold mb-2.5">
           <Icon name="bulb" /> What the game taught you
@@ -127,7 +205,6 @@ export default function DebriefPage() {
         </ul>
       </div>
 
-      {/* per-round detail */}
       <div className="bg-panel border border-line rounded-2xl p-5">
         <div className="text-[11px] font-mono uppercase tracking-wide text-ink3 mb-1">Round by round</div>
         {ROUNDS.map((r) => {
@@ -151,36 +228,16 @@ export default function DebriefPage() {
                   <div className="text-xs text-ink3">not attempted</div>
                 )}
               </div>
-              {band ? (
+              {band && (
                 <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${BAND_META[band].cls}`}>
                   {BAND_META[band].label}
                 </span>
-              ) : (
-                r.ready && (
-                  <Link href={`/${r.slug}`} className="text-xs text-acc hover:underline shrink-0">
-                    play →
-                  </Link>
-                )
               )}
             </div>
           );
         })}
       </div>
-
-      <div className="text-center mt-6 flex gap-2.5 justify-center flex-wrap">
-        <Link href="/" className="text-sm px-5 py-2.5 rounded-[10px] border border-line2 text-ink hover:border-acc2">
-          Mission map
-        </Link>
-        <button
-          onClick={() => {
-            if (confirm("Reset all progress?")) game.reset();
-          }}
-          className="text-sm px-5 py-2.5 rounded-[10px] border border-line2 text-ink2 hover:border-danger hover:text-danger"
-        >
-          Reset progress
-        </button>
-      </div>
-    </main>
+    </>
   );
 }
 

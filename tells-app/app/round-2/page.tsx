@@ -18,8 +18,9 @@ interface Control {
   id: string;
   label: string; // plain language
   tag: string; // the technical name
+  desc: string; // what it does — shown BEFORE selection so the choice is reasoned, not guessed
   correct: boolean;
-  note: string; // why right (correct) / what goes wrong (incorrect) — shown on reveal & debrief
+  note: string; // why right / what goes wrong — shown after the gate opens & in debrief
 }
 
 interface Field {
@@ -35,8 +36,8 @@ interface Scenario {
   sys: string; // the system prompt shown to the model
   source: string; // what the data is
   fields: Field[]; // a concrete sample record
-  atRisk: string; // one-line: what's sensitive here
-  controls: Control[]; // 6 controls, exactly 3 correct
+  risks: string[]; // the specific things that can go wrong here — the basis for choosing
+  controls: Control[]; // 6 controls, exactly 3 correct (one per risk)
   learn: string; // debrief takeaway
 }
 
@@ -57,14 +58,18 @@ sentences for the weekly ops report.`,
       { label: "Health note", value: "on medication for anxiety", risk: true },
       { label: "Message", value: "“My card was declined three times today and I can't check out.”" },
     ],
-    atRisk: "The summary only needs the problem — none of the name, card, SSN or health note.",
+    risks: [
+      "The summary needs only the problem — yet the name, card, SSN and health note are all being sent to the model.",
+      "Whatever is sent could be written to request logs in plain text.",
+      "The outside provider could keep the tickets or train future models on them.",
+    ],
     controls: [
-      { id: "sup-redact", label: "Mask the personal details before the model sees them", tag: "redaction", correct: true, note: "The summary needs the issue, not her SSN or card — so send none of it." },
-      { id: "sup-nolog", label: "Turn off logging of the raw prompts sent to the model", tag: "request logging", correct: true, note: "PII sitting in plain-text request logs is the quiet leak that turns up in the next breach." },
-      { id: "sup-noretain", label: "Use a no-retention / no-training endpoint", tag: "zero-retention", correct: true, note: "So the provider can't keep the tickets or train future models on them." },
-      { id: "sup-prompt", label: "Add “never store personal data” to the prompt", tag: "prompt instruction", correct: false, note: "The model still received everything — a written instruction isn't an access control." },
-      { id: "sup-audit", label: "Keep a full audit log of every ticket sent", tag: "audit log", correct: false, note: "That copies every SSN and card number into a log — the opposite of protecting it. (Contrast with the hiring system, where logging is right.)" },
-      { id: "sup-encrypt", label: "Encrypt the ticket database at rest", tag: "encryption at rest", correct: false, note: "Guards the files on disk, not the copy you hand to the model." },
+      { id: "sup-redact", label: "Mask the personal details before the model sees them", tag: "redaction", desc: "Replaces names, SSNs and card numbers with blanks before anything is sent.", correct: true, note: "The summary needs the issue, not her SSN or card — so send none of it." },
+      { id: "sup-nolog", label: "Turn off logging of the raw prompts sent to the model", tag: "request logging", desc: "Stops the system keeping a saved copy of every request to the model.", correct: true, note: "PII sitting in plain-text request logs is the quiet leak that turns up in the next breach." },
+      { id: "sup-noretain", label: "Use a no-retention / no-training endpoint", tag: "zero-retention", desc: "A provider that contractually won't store your data or train on it.", correct: true, note: "So the provider can't keep the tickets or train future models on them." },
+      { id: "sup-prompt", label: "Add “never store personal data” to the prompt", tag: "prompt instruction", desc: "Adds a sentence to the instructions telling the model to be careful.", correct: false, note: "The model still received everything — a written instruction isn't an access control." },
+      { id: "sup-audit", label: "Keep a full audit log of every ticket sent", tag: "audit log", desc: "Saves a complete copy of every ticket sent, for the record.", correct: false, note: "That copies every SSN and card number into a log — it makes risk #2 worse, not better. (Contrast with the hiring system, where logging decisions is right.)" },
+      { id: "sup-encrypt", label: "Encrypt the ticket database at rest", tag: "encryption at rest", desc: "Scrambles the stored ticket files so a thief can't read them on disk.", correct: false, note: "Guards the files on disk — none of the three risks here. It's the copy handed to the model that leaks." },
     ],
     learn: "When the model doesn't need the personal details, strip them — and don't log or retain what you send.",
   },
@@ -82,14 +87,18 @@ private code repositories and internal wiki.`,
       { label: "JWT_SIGNING_SECRET", value: "8f3c…e21", risk: true },
       { label: "Source", value: "pricing/engine.py — proprietary pricing algorithm", risk: true },
     ],
-    atRisk: "The risk here isn't customer PII — it's live secrets and proprietary code.",
+    risks: [
+      "The file holds live secrets (a Stripe key, a signing secret) that would be sent straight to the model.",
+      "Proprietary code could be retained by the provider or used to train a public model.",
+      "The assistant could surface repos or wiki pages the asking engineer isn't allowed to see.",
+    ],
     controls: [
-      { id: "code-secret", label: "Scan for and strip secrets & keys before indexing", tag: "secret scanning", correct: true, note: "API keys and signing secrets must never reach the model — or its logs." },
-      { id: "code-private", label: "Use a private / no-training enterprise endpoint", tag: "no-training tenancy", correct: true, note: "So proprietary code isn't retained or used to train a public model." },
-      { id: "code-access", label: "Only retrieve docs the asking engineer is allowed to see", tag: "access-scoped retrieval", correct: true, note: "Stops the assistant surfacing repos and wiki pages a user isn't cleared for." },
-      { id: "code-pii", label: "Redact customer names and SSNs", tag: "PII redaction", correct: false, note: "There's no customer PII in this data — the risk is secrets and IP, so this protects nothing here." },
-      { id: "code-prompt", label: "Add “don't reveal secrets” to the prompt", tag: "prompt instruction", correct: false, note: "The secrets are still in what you sent — asking the model nicely doesn't remove them." },
-      { id: "code-sso", label: "Require SSO + 2FA to use the assistant", tag: "SSO / MFA", correct: false, note: "Controls who logs in, not what the model receives or keeps." },
+      { id: "code-secret", label: "Scan for and strip secrets & keys before indexing", tag: "secret scanning", desc: "Detects and removes passwords, API keys and tokens before anything is indexed.", correct: true, note: "API keys and signing secrets must never reach the model — or its logs." },
+      { id: "code-private", label: "Use a private / no-training enterprise endpoint", tag: "no-training tenancy", desc: "A dedicated tenancy where your code isn't stored or used for training.", correct: true, note: "So proprietary code isn't retained or used to train a public model." },
+      { id: "code-access", label: "Only retrieve docs the asking engineer is allowed to see", tag: "access-scoped retrieval", desc: "Limits results to the repos and pages that engineer can already open.", correct: true, note: "Stops the assistant surfacing repos and wiki pages a user isn't cleared for." },
+      { id: "code-pii", label: "Redact customer names and SSNs", tag: "PII redaction", desc: "Blanks out customer names and social-security numbers.", correct: false, note: "There's no customer PII in this data — none of the three risks here is about names or SSNs." },
+      { id: "code-prompt", label: "Add “don't reveal secrets” to the prompt", tag: "prompt instruction", desc: "Adds a line to the instructions telling the model not to reveal secrets.", correct: false, note: "The secrets are still in what you sent — asking the model nicely doesn't remove them." },
+      { id: "code-sso", label: "Require SSO + 2FA to use the assistant", tag: "SSO / MFA", desc: "Makes engineers sign in with a second factor before using the tool.", correct: false, note: "Controls who logs in, not what the model receives or keeps." },
     ],
     learn: "For internal code and docs, the risks are leaked secrets, training on your IP, and over-broad retrieval — not customer PII.",
   },
@@ -110,14 +119,18 @@ from 1 to 10 and recommend advance or reject.`,
       { label: "Experience", value: "15 yrs cloud architecture; led a platform team" },
       { label: "Skills", value: "AWS · Kubernetes · Terraform" },
     ],
-    atRisk: "The identity details invite bias; the experience & skills are what the score should be based on.",
+    risks: [
+      "Identity details (name, age, gender, photo, address) can bias the model's score.",
+      "A hiring decision has to be explainable and challengeable afterwards.",
+      "No one should be advanced or rejected by the model with no human check.",
+    ],
     controls: [
-      { id: "hire-strip", label: "Remove protected attributes (name, age, gender, photo, address) before scoring", tag: "de-biasing", correct: true, note: "Scoring on skills, not identity, is what cuts biased outcomes." },
-      { id: "hire-audit", label: "Log each decision and the reasons behind it", tag: "audit trail", correct: true, note: "A hiring decision has to be explainable and challengeable — here you NEED the record. (The opposite of the support system.)" },
-      { id: "hire-human", label: "Require a human to review before any advance / reject", tag: "human-in-the-loop", correct: true, note: "No candidate should be auto-rejected by a model with no appeal." },
-      { id: "hire-dropskills", label: "Redact the candidate's skills and experience too", tag: "over-redaction", correct: false, note: "That's the very data you need to score — redacting it breaks the task, it doesn't reduce bias." },
-      { id: "hire-prompt", label: "Add “be fair and unbiased” to the prompt", tag: "prompt instruction", correct: false, note: "Telling the model to be fair doesn't remove the age, photo and gender it can still see." },
-      { id: "hire-encrypt", label: "Encrypt the CV files at rest", tag: "encryption at rest", correct: false, note: "Protects stored files, not the biased decision being made." },
+      { id: "hire-strip", label: "Remove protected attributes before scoring", tag: "de-biasing", desc: "Strips name, age, gender, photo and address so the model scores on merit.", correct: true, note: "Scoring on skills, not identity, is what cuts biased outcomes." },
+      { id: "hire-audit", label: "Log each decision and the reasons behind it", tag: "audit trail", desc: "Records each score, recommendation and the reasons behind it.", correct: true, note: "A hiring decision has to be explainable and challengeable — here you NEED the record. (The opposite of the support system.)" },
+      { id: "hire-human", label: "Require a human to review before any advance / reject", tag: "human-in-the-loop", desc: "A recruiter must sign off before anyone is advanced or rejected.", correct: true, note: "No candidate should be auto-rejected by a model with no appeal." },
+      { id: "hire-dropskills", label: "Redact the candidate's skills and experience too", tag: "over-redaction", desc: "Also blanks out the candidate's experience and skills.", correct: false, note: "That's the very data you need to score — redacting it breaks the task, it doesn't address any of the three risks." },
+      { id: "hire-prompt", label: "Add “be fair and unbiased” to the prompt", tag: "prompt instruction", desc: "Adds a line to the instructions telling the model to be fair.", correct: false, note: "Telling the model to be fair doesn't remove the age, photo and gender it can still see." },
+      { id: "hire-encrypt", label: "Encrypt the CV files at rest", tag: "encryption at rest", desc: "Scrambles the stored CV files so they can't be read on disk.", correct: false, note: "Protects stored files, not the biased decision being made." },
     ],
     learn: "For decisions about people, strip identity, keep an audit trail, and keep a human in the loop — note logging is right here, though it was wrong for the support tickets.",
   },
@@ -244,15 +257,15 @@ export default function Round2() {
           "Three different AI systems are about to go live, each fed a different kind of data — customer tickets, your own source code, and job applications.",
           "There's no universal checklist. The controls that protect one system are useless — or harmful — for another. Your job is to fit the right guardrails to each.",
         ]}
-        objective="For each of the three systems, read its prompt and the data it's about to receive, then arm the 3 controls that actually protect that specific data flow before opening the gate."
+        objective="For each of the three systems, read its prompt, the data it's about to receive, and the list of what could go wrong — then arm one control to neutralise each risk before opening the gate."
         instructions={[
-          "Read the system prompt and the sample record — note which parts are sensitive and whether the model even needs them.",
-          "From the 6 controls, arm exactly 3 that fit THIS system. Ask: what must the model not receive, not keep, and who must stay accountable?",
-          "Open the gate. A control that protects the wrong thing lets data leak and costs points.",
-          "The correct controls differ every system — don't reuse the last answer.",
+          "Read the system prompt, the sample data, and the “what could go wrong here” list — those risks are your basis for choosing.",
+          "Arm one control for each risk (3 in total). Every control shows what it does; the wrong ones guard something else or are just an instruction to the model.",
+          "Open the gate. A control that doesn't address a listed risk lets data leak and costs points.",
+          "The risks — and so the right controls — differ every system. Don't reuse the last answer.",
         ]}
         onStart={start}
-        startLabel="Go to the gate"
+        startLabel="Start"
       />
     );
 
@@ -312,11 +325,11 @@ export default function Round2() {
         maxW="max-w-[1040px]"
         goal={
           <>
-            Fit the right guardrails to <b className="text-ink">each</b> system. Read its prompt and data, then arm the{" "}
-            <b className="text-acc">3</b> controls that actually protect this specific data flow.
+            Each system lists <b className="text-ink">what could go wrong</b> on the left. Arm the{" "}
+            <b className="text-acc">3</b> controls that neutralise those risks — one per risk.
           </>
         }
-        scoring="The correct controls differ every system — don't reuse the last answer. A control that guards the wrong thing lets data leak and costs points."
+        scoring="The risks differ every system, so the right controls do too — don't reuse the last answer. A control that doesn't address a listed risk lets data leak and costs points."
       />
 
       {/* scenario stepper */}
@@ -354,32 +367,58 @@ export default function Round2() {
             </div>
 
             <div className="rounded-xl border border-line2 bg-panel2 overflow-hidden">
-              <div className="px-3.5 py-2 border-b border-line flex items-center gap-2 text-[12px] font-semibold">
-                <Icon name="inbox" className="text-info" /> {sc.source}
+              <div className="px-3.5 py-2 border-b border-line flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-[12px] font-semibold">
+                  <Icon name="inbox" className="text-info" /> {sc.source}
+                </span>
+                <span className="flex items-center gap-1.5 text-[10px] text-ink3">
+                  <span className="w-2 h-2 rounded-sm bg-crit/60 border border-crit inline-block" /> sensitive
+                </span>
               </div>
-              <div className="px-3.5 py-3 text-[12px] font-mono flex flex-col gap-1">
+              <div className="px-3.5 pt-2 text-[10.5px] text-ink3">Exactly what the model would receive:</div>
+              <div className="px-3.5 py-2.5 flex flex-col gap-0.5">
                 {sc.fields.map((f, i) => (
-                  <div key={i} className="flex gap-2">
-                    <span className="text-ink3 shrink-0 min-w-[92px]">{f.label}:</span>
-                    <span className={f.risk ? "rounded px-1 bg-crit/20 text-crit border border-crit/40" : "text-ink2"}>{f.value}</span>
+                  <div
+                    key={i}
+                    className={`flex gap-3 items-start py-1.5 px-2 rounded-md border-l-2 ${
+                      f.risk ? "border-crit bg-crit/[0.07]" : "border-transparent"
+                    }`}
+                  >
+                    <span className="text-[10px] uppercase tracking-wide text-ink3 shrink-0 w-[88px] pt-0.5">{f.label}</span>
+                    <span className={`text-[12px] font-mono flex-1 break-words leading-snug ${f.risk ? "text-crit" : "text-ink"}`}>
+                      {f.value}
+                    </span>
                   </div>
                 ))}
               </div>
-              <div className="px-3.5 py-2 border-t border-line text-[11px] text-ink3 flex items-start gap-1.5">
-                <Icon name="alert" className="text-crit mt-px shrink-0" /> {sc.atRisk}
+            </div>
+
+            {/* the basis for choosing: this system's specific risks */}
+            <div className="rounded-xl border border-crit/40 bg-crit/5 overflow-hidden">
+              <div className="px-3.5 py-2 border-b border-crit/25 flex items-center gap-2 text-[11px] font-semibold text-crit uppercase tracking-wide">
+                <Icon name="alert" /> What could go wrong here
               </div>
+              <ol className="px-3.5 py-2.5 flex flex-col gap-2">
+                {sc.risks.map((r, i) => (
+                  <li key={i} className="flex gap-2 text-[12px] leading-snug text-ink2">
+                    <span className="shrink-0 w-[16px] h-[16px] rounded-full bg-crit/15 text-crit flex items-center justify-center text-[9px] font-bold mt-px">
+                      {i + 1}
+                    </span>
+                    {r}
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
 
           {/* RIGHT — controls */}
           <div className="flex flex-col min-h-0">
             <div className="text-[11px] font-mono uppercase tracking-wide text-ink3 mb-1">{sc.question}</div>
-            <div className="flex items-baseline justify-between mb-2.5">
-              <h2 className="text-[15px] font-semibold">
-                Arm 3 controls that fit this system
-              </h2>
+            <div className="flex items-baseline justify-between mb-1">
+              <h2 className="text-[15px] font-semibold">Arm one control for each risk</h2>
               <span className={`text-[12px] font-mono ${armedInScenario === CORRECT_PER ? "text-acc" : "text-ink3"}`}>{armedInScenario}/3 armed</span>
             </div>
+            <p className="text-[11.5px] text-ink3 mb-2.5">Pick the 3 that neutralise the risks on the left. The rest guard the wrong thing — or aren't real controls at all.</p>
 
             <div className="grid gap-2 sm:grid-cols-2">
               {sc.controls.map((c) => {
@@ -412,6 +451,7 @@ export default function Round2() {
                             {c.tag}
                           </span>
                         </div>
+                        <div className="text-[11px] text-ink3 leading-snug mt-0.5">{c.desc}</div>
                         {mark && <div className={`text-[10.5px] leading-snug mt-1 ${good ? "text-ok" : "text-crit"}`}>{c.note}</div>}
                       </div>
                     </div>

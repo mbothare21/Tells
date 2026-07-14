@@ -25,7 +25,7 @@ export function IntroOverlay({
   startLabel = "Start",
 }: IntroProps) {
   return (
-    <div className="fixed inset-0 z-[100] bg-[#05070b]/90 backdrop-blur flex items-center justify-center p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-[#05070b]/70 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto">
       <div className="bg-panel border border-line2 rounded-[18px] max-w-[560px] w-full px-8 py-8 my-auto max-h-[92vh] overflow-y-auto">
         <span className="font-mono text-[11px] tracking-[1.5px] uppercase text-acc">
           Round {roundNum} of {ROUNDS.length}

@@ -19,7 +19,7 @@ export function HudBar({
   const ss = timeLeft % 60;
   const frac = totalSeconds ? timeLeft / totalSeconds : 0;
   return (
-    <div className="flex items-center gap-4 px-5 py-3 border-b border-line bg-panel2/70 backdrop-blur">
+    <div className="flex items-center gap-4 px-5 pr-16 py-3 border-b border-line bg-panel2/70 backdrop-blur">
       <div className="flex items-center gap-2 font-semibold tracking-wide text-[13px]">
         <span className="w-2 h-2 rounded-full bg-acc" style={{ boxShadow: "0 0 10px #37e0c4" }} />
         <span className="font-mono uppercase">{GAME_TITLE}</span>

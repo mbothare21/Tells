@@ -483,7 +483,7 @@ export default function Round3() {
           "One clock covers all three, and later tests are worth more — keep moving.",
         ]}
         onStart={start}
-        startLabel="Begin the checks"
+        startLabel="Start"
       />
     );
 
@@ -514,13 +514,13 @@ export default function Round3() {
     return (
       <DebriefOverlay
         roundNum={3}
-        headline={clearedRef.current === TESTS.length ? "All three, clean" : `${clearedRef.current} of ${TESTS.length} aced`}
+        headline={clearedRef.current === TESTS.length ? "All three passed" : `${clearedRef.current} of ${TESTS.length} passed`}
         intro="Real, fake, or tampered — AI makes all three harder to tell apart. The habit that carries across every test: don't take anything at face value, cross-check before you trust it."
         stats={[
           { v: String(score), l: "score", color: "text-acc" },
           {
             v: `${clearedRef.current}/${TESTS.length}`,
-            l: "tests aced",
+            l: "tests passed",
             color: clearedRef.current === TESTS.length ? "text-ok" : "text-warn",
           },
         ]}
@@ -969,7 +969,7 @@ export default function Round3() {
           const a = ARTIFACTS.find((x) => x.id === t2Modal)!;
           const already = !!marked[t2Modal];
           return (
-            <div className="fixed inset-0 z-[100] bg-[#05070b]/90 backdrop-blur flex items-center justify-center p-6">
+            <div className="fixed inset-0 z-[100] bg-[#05070b]/70 backdrop-blur-sm flex items-center justify-center p-6">
               <div className="bg-panel border border-line2 rounded-[18px] max-w-[520px] w-full px-6 py-6">
                 <div className="flex items-center gap-1.5 text-acc font-mono uppercase tracking-wide text-[11px] mb-2">
                   <Icon name="flag" /> Flag · {a.title}
@@ -1034,7 +1034,7 @@ export default function Round3() {
           const preview = sec.segs.map((s) => s.t).join("");
           const already = !!flagged[modalSection];
           return (
-            <div className="fixed inset-0 z-[100] bg-[#05070b]/90 backdrop-blur flex items-center justify-center p-6">
+            <div className="fixed inset-0 z-[100] bg-[#05070b]/70 backdrop-blur-sm flex items-center justify-center p-6">
               <div className="bg-panel border border-line2 rounded-[18px] max-w-[520px] w-full px-6 py-6">
                 <div className="flex items-center gap-1.5 text-acc font-mono uppercase tracking-wide text-[11px] mb-2">
                   <Icon name="flag" /> Flag section

@@ -42,7 +42,7 @@ export function DebriefOverlay({
 }) {
   const hasConsequences = consequences && consequences.length > 0;
   return (
-    <div className="fixed inset-0 z-[100] bg-[#05070b]/90 backdrop-blur flex items-center justify-center p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-[#05070b]/70 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto">
       <div className="bg-panel border border-line2 rounded-[18px] max-w-[600px] w-full px-8 py-7 max-h-[90vh] overflow-y-auto my-auto">
         <span className="font-mono text-[11px] tracking-[1.5px] uppercase text-acc">
           Debrief · Round {roundNum}
@@ -108,10 +108,10 @@ export function DebriefOverlay({
             Run it again
           </button>
           <Link href="/" className="text-sm px-5 py-2.5 rounded-[10px] border border-line2 text-ink2 hover:border-acc2">
-            Mission map
+            All rounds
           </Link>
           <Link href="/debrief" className="text-sm px-5 py-2.5 rounded-[10px] bg-gradient-to-b from-acc to-acc2 text-[#04221d] font-semibold hover:brightness-110">
-            Full report
+            Your results
           </Link>
         </div>
       </div>
