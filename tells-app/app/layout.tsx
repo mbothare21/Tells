@@ -7,6 +7,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { SessionGuard } from "@/components/SessionGuard";
 import { Fullscreen } from "@/components/Fullscreen";
 import { MatrixRain } from "@/components/MatrixRain";
+import { Logo } from "@/components/Logo";
 
 export const metadata: Metadata = {
   title: "Tells",
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <MatrixRain />
+        <Logo />
         <GameProvider>
           <AuthProvider>
             <SessionGuard />

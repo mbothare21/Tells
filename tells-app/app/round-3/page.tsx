@@ -8,6 +8,7 @@ import { IntroOverlay } from "@/components/IntroOverlay";
 import { DebriefOverlay } from "@/components/DebriefOverlay";
 import { ObjectiveBar } from "@/components/ObjectiveBar";
 import { Icon } from "@/components/Icon";
+import { timeBonus } from "@/lib/config";
 
 const ROUND_SECONDS = 240; // one clock for all three tests
 
@@ -285,11 +286,12 @@ export default function Round3() {
   const [t3fb, setT3fb] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const [score, setScore] = useState(0);
+  const [bonus, setBonus] = useState(0);
   const scoreRef = useRef(0);
   const clearedRef = useRef(0); // how many tests fully aced
   const recorded = useRef(false);
 
-  const { timeLeft, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finalize());
+  const { timeLeft, timeLeftRef, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finalize());
 
   function bump(pts: number) {
     scoreRef.current = Math.max(0, scoreRef.current + pts);
@@ -314,6 +316,7 @@ export default function Round3() {
     setT3done(false);
     setT3fb(null);
     setScore(0);
+    setBonus(0);
     scoreRef.current = 0;
     clearedRef.current = 0;
     recorded.current = false;
@@ -452,6 +455,10 @@ export default function Round3() {
   function finalize() {
     if (recorded.current) return;
     recorded.current = true;
+    const tb = timeBonus(timeLeftRef.current);
+    scoreRef.current += tb;
+    setScore(scoreRef.current);
+    setBonus(tb);
     game.recordResult("round-3", {
       score: scoreRef.current,
       correct: clearedRef.current,
@@ -480,7 +487,7 @@ export default function Round3() {
           "Test 1: read each writing sample and call it Human, AI, or “can't tell”. Being honest about genuine uncertainty scores highest.",
           "Test 2: inspect the applicant's file, flag anything fabricated, and pick the reason it's fake. Flagging a genuine item costs you.",
           "Test 3: read the article, flag each section carrying a hidden instruction, and say why — the right flag with the wrong reason only scores half.",
-          "One clock covers all three, and later tests are worth more — keep moving.",
+          "One clock covers all three, later tests are worth more, and the time left when you finish is added to your score — keep moving.",
         ]}
         onStart={start}
         startLabel="Start"
@@ -518,6 +525,7 @@ export default function Round3() {
         intro="Real, fake, or tampered — AI makes all three harder to tell apart. The habit that carries across every test: don't take anything at face value, cross-check before you trust it."
         stats={[
           { v: String(score), l: "score", color: "text-acc" },
+          { v: `+${bonus}`, l: "time bonus", color: "text-ok" },
           {
             v: `${clearedRef.current}/${TESTS.length}`,
             l: "tests passed",

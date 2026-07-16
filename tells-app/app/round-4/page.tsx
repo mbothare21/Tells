@@ -7,6 +7,7 @@ import { HudBar } from "@/components/HudBar";
 import { IntroOverlay } from "@/components/IntroOverlay";
 import { DebriefOverlay } from "@/components/DebriefOverlay";
 import { ObjectiveBar } from "@/components/ObjectiveBar";
+import { timeBonus } from "@/lib/config";
 
 const ROUND_SECONDS = 150;
 type Phase = "intro" | "play" | "debrief";
@@ -36,28 +37,54 @@ export default function Round4() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [score, setScore] = useState(0);
+  const [bonus, setBonus] = useState(0);
+  // refs mirror state so finish() never records a stale score/picks after the last answer
+  const scoreRef = useRef(0);
+  const picksRef = useRef<Record<string, string>>({});
   const recorded = useRef(false);
-  const { timeLeft, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finish());
+  const { timeLeft, timeLeftRef, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finish());
 
-  function start() { setPhase("play"); setPicks({}); setScore(0); recorded.current = false; reset(ROUND_SECONDS); }
+  function start() {
+    setPhase("play");
+    setPicks({});
+    setScore(0);
+    setBonus(0);
+    scoreRef.current = 0;
+    picksRef.current = {};
+    recorded.current = false;
+    reset(ROUND_SECONDS);
+  }
 
   function pick(cid: string, v: string) {
-    if (picks[cid]) return; // lock first answer for fair scoring
+    if (picksRef.current[cid]) return; // lock first answer for fair scoring
     const c = CASES.find((x) => x.id === cid)!;
     const correct = v === c.answer;
-    setPicks((p) => ({ ...p, [cid]: v }));
-    if (correct) setScore((s) => s + 250);
-    if (Object.keys({ ...picks, [cid]: v }).length === CASES.length) setTimeout(() => finish(), 600);
+    picksRef.current = { ...picksRef.current, [cid]: v };
+    setPicks(picksRef.current);
+    if (correct) {
+      scoreRef.current += 250;
+      setScore(scoreRef.current);
+    }
+    if (Object.keys(picksRef.current).length === CASES.length) setTimeout(() => finish(), 600);
   }
 
   function finish() {
     if (recorded.current) return;
     recorded.current = true;
-    const correct = CASES.filter((c) => picks[c.id] === c.answer).length;
+    const answered = Object.keys(picksRef.current).length;
+    const correct = CASES.filter((c) => picksRef.current[c.id] === c.answer).length;
+    const tb = timeBonus(timeLeftRef.current);
+    scoreRef.current += tb;
+    setScore(scoreRef.current);
+    setBonus(tb);
     game.recordResult("round-4", {
-      score, correct, total: CASES.length,
-      accuracy: Object.keys(picks).length ? Math.round((correct / Object.keys(picks).length) * 100) : 0,
-      breaches: 0, flagsCaptured: correct, flagsTotal: CASES.length,
+      score: scoreRef.current,
+      correct,
+      total: CASES.length,
+      accuracy: answered ? Math.round((correct / answered) * 100) : 0,
+      breaches: 0,
+      flagsCaptured: correct,
+      flagsTotal: CASES.length,
     });
     setPhase("debrief");
   }
@@ -74,7 +101,7 @@ export default function Round4() {
           "Read each case — what the automated system decided, and how it reached that decision.",
           "Choose the one failure that best fits: unfair bias, no explanation given, or a privacy violation.",
           "Your first answer locks in, so read the whole case before you choose.",
-          "You score +250 for each correct diagnosis.",
+          "You score +250 for each correct diagnosis, plus a bonus for the time left when you finish.",
         ]}
         onStart={start} startLabel="Start" />
     );
@@ -95,6 +122,7 @@ export default function Round4() {
         intro="Knowing why an automated decision is unfair, unexplained, or invasive is the first step to fixing it."
         stats={[
           { v: String(score), l: "score", color: "text-acc" },
+          { v: `+${bonus}`, l: "time bonus", color: "text-ok" },
           { v: `${correct}/${CASES.length}`, l: "correct", color: correct === CASES.length ? "text-ok" : "text-warn" },
         ]}
         rows={CASES.map((c) => ({

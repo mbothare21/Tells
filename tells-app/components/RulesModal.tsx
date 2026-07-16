@@ -1,6 +1,7 @@
 "use client";
 
 import { TAB_PENALTY, DQ_LIMIT } from "@/lib/auth";
+import { TIME_BONUS_PER_SEC, TIME_BONUS_CAP } from "@/lib/config";
 import { Icon } from "./Icon";
 
 export function RulesModal({ onClose }: { onClose: () => void }) {
@@ -25,7 +26,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
           <li><b className="text-ink">Round 2 — Data gate:</b> +250 per system secured (+150 if you get it first try); −80 each time you open the gate on the wrong controls.</li>
           <li><b className="text-ink">Round 3 — Face value:</b> three tests, later ones worth more. Honest &ldquo;can&rsquo;t tell&rdquo; scores highest where it fits; a right flag with the wrong reason scores half; wrong flags cost points.</li>
           <li><b className="text-ink">Round 4 — Review board:</b> +250 for each correct diagnosis.</li>
-          <li>Your total is the sum across all rounds. Being fast <i>and</i> right wins.</li>
+          <li><b className="text-ink">Speed bonus:</b> when you finish a round, the time left on the clock is turned into points — <b className="text-ok">+{TIME_BONUS_PER_SEC} per second</b> remaining (up to +{TIME_BONUS_CAP}). Answering faster scores more, so being fast <i>and</i> right wins.</li>
+          <li>Your total is the sum across all rounds.</li>
         </Section>
 
         <Section icon="alert" title="Staying in the game" tone="crit">
@@ -39,8 +41,11 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="text-sm font-semibold px-6 py-2.5 rounded-[10px] bg-gradient-to-b from-acc to-acc2 text-[#04221d] hover:brightness-110"
           >
-            Got it
+            Got it — let&rsquo;s go
           </button>
+          <p className="text-ink3 text-[11.5px] mt-3">
+            You can reopen these rules any time from your initials in the top-right corner.
+          </p>
         </div>
       </div>
     </div>

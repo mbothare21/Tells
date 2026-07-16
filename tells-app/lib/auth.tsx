@@ -30,6 +30,8 @@ interface AuthState {
   disqualified: boolean;
   registerTabSwitch: () => void;
   resetAntiCheat: () => void;
+  justLoggedIn: boolean; // true only right after an actual login (not a restore) — used to auto-show the rules
+  ackLogin: () => void;
 }
 
 const Ctx = createContext<AuthState | null>(null);
@@ -50,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [tabSwitches, setTabSwitches] = useState(0);
   const [penalty, setPenalty] = useState(0);
   const [disqualified, setDisqualified] = useState(false);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
   const anti = useRef({ tabSwitches: 0, penalty: 0, disqualified: false });
 
   useEffect(() => {
@@ -88,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!rec || rec.password !== password) return "Incorrect username or password.";
     const su: SessionUser = { username: key, name: rec.name, initials: initialsOf(rec.name) };
     setUser(su);
+    setJustLoggedIn(true);
     try {
       localStorage.setItem(UKEY, JSON.stringify(su));
     } catch {
@@ -126,7 +130,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ ready, user, login, logout, tabSwitches, penalty, disqualified, registerTabSwitch, resetAntiCheat }}
+      value={{
+        ready,
+        user,
+        login,
+        logout,
+        tabSwitches,
+        penalty,
+        disqualified,
+        registerTabSwitch,
+        resetAntiCheat,
+        justLoggedIn,
+        ackLogin: () => setJustLoggedIn(false),
+      }}
     >
       {children}
     </Ctx.Provider>

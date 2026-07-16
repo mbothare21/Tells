@@ -8,6 +8,7 @@ import { IntroOverlay } from "@/components/IntroOverlay";
 import { DebriefOverlay } from "@/components/DebriefOverlay";
 import { ObjectiveBar } from "@/components/ObjectiveBar";
 import { Icon } from "@/components/Icon";
+import { timeBonus } from "@/lib/config";
 
 const ROUND_SECONDS = 240; // one clock for all three systems
 const SOLVE = 250;
@@ -148,6 +149,7 @@ export default function Round2() {
   const [marks, setMarks] = useState<Record<string, "right" | "wrong">>({});
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
   const [score, setScore] = useState(0);
+  const [bonus, setBonus] = useState(0);
   const [fb, setFb] = useState<{ tone: "ok" | "bad" | "info"; msg: string } | null>(null);
 
   const scoreRef = useRef(0);
@@ -156,7 +158,7 @@ export default function Round2() {
   const attemptsRef = useRef<Record<string, number>>({});
   const recorded = useRef(false);
 
-  const { timeLeft, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finalize());
+  const { timeLeft, timeLeftRef, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finalize());
 
   const sc = SCENARIOS[step];
   const solved = !!solvedMap[sc.id];
@@ -169,6 +171,7 @@ export default function Round2() {
     setMarks({});
     setSolvedMap({});
     setScore(0);
+    setBonus(0);
     setFb(null);
     scoreRef.current = 0;
     clearedRef.current = 0;
@@ -236,6 +239,10 @@ export default function Round2() {
   function finalize() {
     if (recorded.current) return;
     recorded.current = true;
+    const tb = timeBonus(timeLeftRef.current);
+    scoreRef.current += tb;
+    setScore(scoreRef.current);
+    setBonus(tb);
     game.recordResult("round-2", {
       score: scoreRef.current,
       correct: clearedRef.current,
@@ -263,6 +270,7 @@ export default function Round2() {
           "Arm one control for each risk (3 in total). Every control shows what it does; the wrong ones guard something else or are just an instruction to the model.",
           "Open the gate. A control that doesn't address a listed risk lets data leak and costs points.",
           "The risks — and so the right controls — differ every system. Don't reuse the last answer.",
+          "Be quick: the time left when you finish all three is added to your score.",
         ]}
         onStart={start}
         startLabel="Start"
@@ -289,6 +297,7 @@ export default function Round2() {
         intro="Different systems, different data, different risks — and different guardrails. The controls that fit customer tickets don't fit source code or hiring decisions."
         stats={[
           { v: String(score), l: "score", color: "text-acc" },
+          { v: `+${bonus}`, l: "time bonus", color: "text-ok" },
           { v: `${clearedRef.current}/${SCENARIOS.length}`, l: "secured", color: clearedRef.current === SCENARIOS.length ? "text-ok" : "text-warn" },
           { v: String(leaksRef.current), l: "leaks", color: leaksRef.current ? "text-crit" : "text-ok" },
         ]}

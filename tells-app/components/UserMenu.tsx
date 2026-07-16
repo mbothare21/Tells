@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useGame } from "@/lib/gameState";
 import { upsertScore } from "@/lib/leaderboard";
@@ -8,10 +8,18 @@ import { RulesModal } from "./RulesModal";
 import { Icon } from "./Icon";
 
 export function UserMenu() {
-  const { user, logout, penalty, disqualified, resetAntiCheat } = useAuth();
+  const { user, logout, penalty, disqualified, resetAntiCheat, justLoggedIn, ackLogin } = useAuth();
   const game = useGame();
   const [open, setOpen] = useState(false);
   const [rules, setRules] = useState(false);
+
+  // show the rules automatically right after logging in
+  useEffect(() => {
+    if (justLoggedIn) {
+      setRules(true);
+      ackLogin();
+    }
+  }, [justLoggedIn, ackLogin]);
 
   if (!user) return null;
 

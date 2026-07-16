@@ -8,6 +8,7 @@ import { IntroOverlay } from "@/components/IntroOverlay";
 import { DebriefOverlay } from "@/components/DebriefOverlay";
 import { ObjectiveBar } from "@/components/ObjectiveBar";
 import { Icon } from "@/components/Icon";
+import { timeBonus } from "@/lib/config";
 
 const ROUND_SECONDS = 240;
 const RIGHT = 200; // correct call
@@ -191,6 +192,7 @@ export default function Round1() {
   const [correct, setCorrect] = useState(0);
   const [breaches, setBreaches] = useState(0);
   const [falsePos, setFalsePos] = useState(0);
+  const [bonus, setBonus] = useState(0);
   const [fb, setFb] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const scoreRef = useRef(0);
@@ -198,7 +200,7 @@ export default function Round1() {
   const breachRef = useRef(0);
   const recorded = useRef(false);
 
-  const { timeLeft, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finalize());
+  const { timeLeft, timeLeftRef, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finalize());
 
   const item = ITEMS[idx];
   const hasHidden = item?.content.some((s) => s.role === "hidden");
@@ -214,6 +216,7 @@ export default function Round1() {
     setCorrect(0);
     setBreaches(0);
     setFalsePos(0);
+    setBonus(0);
     setFb(null);
     scoreRef.current = 0;
     correctRef.current = 0;
@@ -268,6 +271,10 @@ export default function Round1() {
   function finalize() {
     if (recorded.current) return;
     recorded.current = true;
+    const tb = timeBonus(timeLeftRef.current);
+    scoreRef.current += tb;
+    setScore(scoreRef.current);
+    setBonus(tb);
     game.recordResult("round-1", {
       score: scoreRef.current,
       correct: correctRef.current,
@@ -295,6 +302,7 @@ export default function Round1() {
           "Look at the assistant's proposed action beneath it. Would a real person have asked for that?",
           "Use “Inspect for hidden text” — some instructions are hidden in text you can't see at a glance.",
           "Approve if it's genuine, or Block if it's been hijacked. A missed hijack and a wrongly-blocked message both cost points.",
+          "Be quick: the time left on the clock when you finish is added to your score, so fast and right beats slow.",
         ]}
         onStart={start}
         startLabel="Start"
@@ -326,9 +334,9 @@ export default function Round1() {
         }
         stats={[
           { v: String(score), l: "score", color: "text-acc" },
+          { v: `+${bonus}`, l: "time bonus", color: "text-ok" },
           { v: `${correct}/${ITEMS.length}`, l: "correct", color: correct === ITEMS.length ? "text-ok" : "" },
           { v: String(breaches), l: "attacks run", color: breaches ? "text-crit" : "text-ok" },
-          { v: String(falsePos), l: "false blocks" },
         ]}
         rows={ITEMS.map((it) => ({
           ok: it.verdict === "safe",
