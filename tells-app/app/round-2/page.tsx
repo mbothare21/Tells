@@ -8,9 +8,16 @@ import { IntroOverlay } from "@/components/IntroOverlay";
 import { DebriefOverlay } from "@/components/DebriefOverlay";
 import { ObjectiveBar } from "@/components/ObjectiveBar";
 import { Icon } from "@/components/Icon";
+import { Hints } from "@/components/Hints";
 import { timeBonus } from "@/lib/config";
 
 const ROUND_SECONDS = 240; // one clock for all three systems
+
+const HINTS = [
+  "This round is about protecting the data you hand to an AI. A control only helps if it changes what the model actually receives, is logged, or is kept.",
+  "Match one control to each risk in the “what could go wrong” list. Skip controls that guard a different door — a disk, a login, a network.",
+  "A written instruction telling the model to “be careful” is never a real control; the model still receives everything.",
+];
 const SOLVE = 250;
 const FIRST_TRY_BONUS = 150;
 const FAIL_COST = 80;
@@ -236,6 +243,11 @@ export default function Round2() {
     setFb(null);
   }
 
+  function spendHint(cost: number) {
+    scoreRef.current = Math.max(0, scoreRef.current - cost);
+    setScore(scoreRef.current);
+  }
+
   function finalize() {
     if (recorded.current) return;
     recorded.current = true;
@@ -328,6 +340,7 @@ export default function Round2() {
             <span className="text-[9px] uppercase tracking-wide text-ink2">system</span>
           </div>
         }
+        hint={<Hints hints={HINTS} onSpend={spendHint} />}
       />
 
       <ObjectiveBar

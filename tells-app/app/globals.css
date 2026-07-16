@@ -23,6 +23,15 @@ body {
 .em-btn { display:inline-block; background:#0067c0; color:#fff; padding:9px 18px; border-radius:6px; font-weight:600; text-decoration:none; font-size:13px; margin:4px 0; cursor:pointer; }
 .em-link { color:#5aa2f5; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
 
+/* Selecting text forces a readable colour — so white-on-white / hidden text becomes
+   visible when you drag-highlight it (or Ctrl+A), exactly as in a real inbox or PDF. */
+::selection { background: rgba(55,224,196,.85); color: #04221d; }
+::-moz-selection { background: rgba(55,224,196,.85); color: #04221d; }
+
+/* Hidden text: coloured to match the panel so it's invisible at rest, but still real,
+   selectable text that reveals itself when highlighted. */
+.hidden-ink { color: #0e121b; }
+
 /* scrollbars */
 *::-webkit-scrollbar { width: 9px; height: 9px; }
 *::-webkit-scrollbar-thumb { background: #28324a; border-radius: 6px; }

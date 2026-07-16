@@ -8,9 +8,16 @@ import { IntroOverlay } from "@/components/IntroOverlay";
 import { DebriefOverlay } from "@/components/DebriefOverlay";
 import { ObjectiveBar } from "@/components/ObjectiveBar";
 import { Icon } from "@/components/Icon";
+import { Hints } from "@/components/Hints";
 import { timeBonus } from "@/lib/config";
 
 const ROUND_SECONDS = 240;
+
+const HINTS = [
+  "Prompt injection: hidden instructions planted inside content the AI reads — an email, a document, a web page — that trick it into doing something no human asked for, like leaking data or taking an action.",
+  "Don't just read the message — check the assistant's proposed action beneath it. If it does something no genuine sender would ask for, it's been hijacked.",
+  "Some instructions are invisible. Drag to highlight the message (or Ctrl/Cmd+A) to reveal white-on-white text.",
+];
 const RIGHT = 200; // correct call
 const MISS = 250; // approved a hijack — the AI executed it
 const FALSE_POS = 100; // blocked a legitimate task
@@ -186,7 +193,6 @@ export default function Round1() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [idx, setIdx] = useState(0);
   const [answered, setAnswered] = useState(false);
-  const [revealed, setRevealed] = useState(false);
   const [lastChoice, setLastChoice] = useState<Choice | null>(null);
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -203,14 +209,12 @@ export default function Round1() {
   const { timeLeft, timeLeftRef, reset } = useCountdown(ROUND_SECONDS, phase === "play", () => finalize());
 
   const item = ITEMS[idx];
-  const hasHidden = item?.content.some((s) => s.role === "hidden");
   const ch = item ? CHANNELS[item.channel] : null;
 
   function start() {
     setPhase("play");
     setIdx(0);
     setAnswered(false);
-    setRevealed(false);
     setLastChoice(null);
     setScore(0);
     setCorrect(0);
@@ -233,7 +237,6 @@ export default function Round1() {
 
     setLastChoice(choice);
     setAnswered(true);
-    setRevealed(true);
 
     if (isCorrect) {
       scoreRef.current += RIGHT;
@@ -256,6 +259,11 @@ export default function Round1() {
     setScore(scoreRef.current);
   }
 
+  function spendHint(cost: number) {
+    scoreRef.current = Math.max(0, scoreRef.current - cost);
+    setScore(scoreRef.current);
+  }
+
   function next() {
     if (idx >= ITEMS.length - 1) {
       finalize();
@@ -263,7 +271,6 @@ export default function Round1() {
     }
     setIdx((i) => i + 1);
     setAnswered(false);
-    setRevealed(false);
     setLastChoice(null);
     setFb(null);
   }
@@ -300,7 +307,7 @@ export default function Round1() {
         instructions={[
           "Open each item and read what actually came in — the email, document, ticket or web page.",
           "Look at the assistant's proposed action beneath it. Would a real person have asked for that?",
-          "Use “Inspect for hidden text” — some instructions are hidden in text you can't see at a glance.",
+          "Some instructions are hidden in invisible text — drag to highlight the message (or Ctrl/Cmd+A) to reveal them, just like you would with a suspicious email.",
           "Approve if it's genuine, or Block if it's been hijacked. A missed hijack and a wrongly-blocked message both cost points.",
           "Be quick: the time left on the clock when you finish is added to your score, so fast and right beats slow.",
         ]}
@@ -365,6 +372,7 @@ export default function Round1() {
             </div>
           ) : undefined
         }
+        hint={<Hints hints={HINTS} onSpend={spendHint} />}
       />
 
       <ObjectiveBar
@@ -420,25 +428,18 @@ export default function Round1() {
             </div>
 
             <div className="px-4 py-4">
-              <div className="text-[13.5px] leading-relaxed text-ink2 whitespace-pre-wrap">
+              <div className="text-[13.5px] leading-relaxed text-ink2 whitespace-pre-wrap select-text">
                 {item.content.map((s, i) => (
-                  <Segment key={i} seg={s} answered={answered} revealed={revealed} />
+                  <Segment key={i} seg={s} answered={answered} />
                 ))}
               </div>
 
-              {!answered &&
-                (revealed ? (
-                  <span className="mt-3 inline-block text-[11px] text-ink3">
-                    {hasHidden ? "— hidden text revealed above" : "— nothing hidden in this one"}
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => setRevealed(true)}
-                    className="mt-3 text-[11.5px] px-2.5 py-1.5 rounded-lg border border-line2 text-ink3 hover:border-acc2 hover:text-ink inline-flex items-center gap-1.5"
-                  >
-                    <Icon name="search" /> Inspect for hidden text
-                  </button>
-                ))}
+              {!answered && (
+                <div className="mt-3 text-[11px] text-ink3 flex items-center gap-1.5">
+                  <Icon name="search" /> Suspicious? Drag to highlight the message (or Ctrl/Cmd+A) to reveal anything
+                  hidden.
+                </div>
+              )}
             </div>
           </article>
 
@@ -505,19 +506,16 @@ export default function Round1() {
   );
 }
 
-function Segment({ seg, answered, revealed }: { seg: Seg; answered: boolean; revealed: boolean }) {
+function Segment({ seg, answered }: { seg: Seg; answered: boolean }) {
   if (!seg.role) return <span>{seg.text}</span>;
 
   // after the call, every injection lights up red so the lesson is unmistakable
   if (answered)
     return <span className="rounded px-1 bg-crit/25 text-danger border border-crit/40">{seg.text}</span>;
 
-  // hidden text is invisible until inspected (but still "read" by the AI — and selectable)
-  if (seg.role === "hidden") {
-    if (revealed)
-      return <span className="rounded px-1 bg-warn/20 text-warn border border-warn/40">{seg.text}</span>;
-    return <span className="text-transparent select-all">{seg.text}</span>;
-  }
+  // hidden text is invisible at rest — but it's real, selectable text: drag-highlight
+  // the content (or Ctrl+A) and it shows up, just like white-on-white text in a real file.
+  if (seg.role === "hidden") return <span className="hidden-ink">{seg.text}</span>;
 
   // plain / retrieved injections sit in the content in plain sight — no pre-highlight
   return <span>{seg.text}</span>;

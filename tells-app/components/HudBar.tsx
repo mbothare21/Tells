@@ -8,12 +8,14 @@ export function HudBar({
   totalSeconds,
   score,
   extra,
+  hint,
 }: {
   roundName: string;
   timeLeft: number;
   totalSeconds: number;
   score: number;
   extra?: React.ReactNode;
+  hint?: React.ReactNode;
 }) {
   const mm = Math.floor(timeLeft / 60);
   const ss = timeLeft % 60;
@@ -44,6 +46,7 @@ export function HudBar({
         <span className="font-mono text-xl font-bold text-acc">{score}</span>
         <span className="text-[9px] tracking-wide uppercase text-ink2">score</span>
       </div>
+      {hint}
     </div>
   );
 }

@@ -12,3 +12,7 @@ export const TIME_BONUS_CAP = 300;
 export function timeBonus(secondsLeft: number): number {
   return Math.min(TIME_BONUS_CAP, Math.max(0, Math.round(secondsLeft)) * TIME_BONUS_PER_SEC);
 }
+
+// Hints: the first hint (the round's theme / a definition) is free; each further hint
+// nudges you toward clearing the round and costs points.
+export const HINT_COST = 75;

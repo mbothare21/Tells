@@ -7,9 +7,15 @@ import { HudBar } from "@/components/HudBar";
 import { IntroOverlay } from "@/components/IntroOverlay";
 import { DebriefOverlay } from "@/components/DebriefOverlay";
 import { ObjectiveBar } from "@/components/ObjectiveBar";
+import { Hints } from "@/components/Hints";
 import { timeBonus } from "@/lib/config";
 
 const ROUND_SECONDS = 150;
+
+const HINTS = [
+  "This round is about how automated decisions fail: unfair bias, no explanation a person can contest, or using data without consent.",
+  "Bias often hides in a proxy like postal code. “No explanation” means even staff can't say why. “Privacy” means data used for a purpose it wasn't consented for.",
+];
 type Phase = "intro" | "play" | "debrief";
 
 interface Case { id: string; area: string; text: string; answer: string; why: string; }
@@ -53,6 +59,11 @@ export default function Round4() {
     picksRef.current = {};
     recorded.current = false;
     reset(ROUND_SECONDS);
+  }
+
+  function spendHint(cost: number) {
+    scoreRef.current = Math.max(0, scoreRef.current - cost);
+    setScore(scoreRef.current);
   }
 
   function pick(cid: string, v: string) {
@@ -138,7 +149,7 @@ export default function Round4() {
 
   return (
     <div className="flex flex-col h-screen max-w-[1180px] mx-auto">
-      <HudBar roundName="The review board" timeLeft={timeLeft} totalSeconds={ROUND_SECONDS} score={score} />
+      <HudBar roundName="The review board" timeLeft={timeLeft} totalSeconds={ROUND_SECONDS} score={score} hint={<Hints hints={HINTS} onSpend={spendHint} />} />
       <ObjectiveBar
         maxW="max-w-[760px]"
         goal={

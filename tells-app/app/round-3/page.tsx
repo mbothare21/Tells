@@ -8,9 +8,16 @@ import { IntroOverlay } from "@/components/IntroOverlay";
 import { DebriefOverlay } from "@/components/DebriefOverlay";
 import { ObjectiveBar } from "@/components/ObjectiveBar";
 import { Icon } from "@/components/Icon";
+import { Hints } from "@/components/Hints";
 import { timeBonus } from "@/lib/config";
 
 const ROUND_SECONDS = 240; // one clock for all three tests
+
+const HINTS = [
+  "This round is about telling real from fake from tampered. No AI detector is perfect — verify against independent evidence and name the specific tell.",
+  "Test 2: cross-check the résumé's dates and claims against each other. Test 3: look for text that gives instructions to a machine, not the reader.",
+  "Honest “can't tell” can be the right answer, and a right flag with the wrong reason only scores half.",
+];
 
 type Phase = "intro" | "play" | "debrief";
 
@@ -576,6 +583,7 @@ export default function Round3() {
             <span className="text-[9px] uppercase tracking-wide text-ink2">test</span>
           </div>
         }
+        hint={<Hints hints={HINTS} onSpend={(c) => bump(-c)} />}
       />
 
       <ObjectiveBar
