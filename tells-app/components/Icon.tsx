@@ -22,6 +22,8 @@ const PATHS: Record<string, React.ReactNode> = {
   bot: <><rect x="5" y="8" width="14" height="10" rx="2" /><path d="M12 8V5M9 13h.01M15 13h.01" /></>,
   expand: <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />,
   shrink: <path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5" />,
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19" /></>,
+  moon: <path d="M20 14.5A8 8 0 019.5 4 7 7 0 1020 14.5z" />,
 };
 
 export function Icon({ name, className }: IconProps) {

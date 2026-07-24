@@ -36,12 +36,36 @@ export default function DebriefPage() {
 
   const board = getLeaderboard(user ? { username: user.username, name: user.name, score: effective, dq: disqualified } : null);
 
+  const done = ROUNDS.filter((r) => game.isComplete(r.slug));
+  const allDone = done.length === ROUNDS.length;
+
   return (
     <main className="mx-auto max-w-2xl px-5 py-12">
       <div className="text-center mb-5">
         <span className="font-mono text-[11px] tracking-[1.5px] uppercase text-acc">Your results</span>
         <h1 className="text-3xl font-bold tracking-tight mt-2">Results</h1>
       </div>
+
+      {/* take-home learning document */}
+      <Link
+        href="/report"
+        className="group flex items-center gap-3.5 rounded-2xl border border-acc/40 bg-gradient-to-r from-acc/10 to-acc/5 px-4 py-3.5 mb-6 hover:border-acc transition"
+      >
+        <span className="shrink-0 w-10 h-10 rounded-xl bg-acc/15 text-acc flex items-center justify-center text-lg">
+          <Icon name="doc" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-[14px] font-semibold text-ink">
+            {allDone ? "Your AI Security Field Guide is ready" : "Get your AI Security Field Guide"}
+          </span>
+          <span className="block text-[12px] text-ink2 leading-snug mt-0.5">
+            A plain-English handout of every term — human-in-the-loop, prompt injection and the rest — with your results. Keep it and refer back.
+          </span>
+        </span>
+        <span className="shrink-0 text-acc text-[13px] font-semibold inline-flex items-center gap-1 group-hover:gap-1.5 transition-all">
+          Open <Icon name="arrow" />
+        </span>
+      </Link>
 
       {/* tabs */}
       <div className="flex gap-1 p-1 rounded-xl border border-line2 bg-panel2 mb-6 max-w-[340px] mx-auto">

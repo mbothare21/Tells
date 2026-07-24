@@ -25,7 +25,7 @@ const FAIL_COST = 80;
 interface Control {
   id: string;
   label: string; // plain language
-  tag: string; // the technical name
+  tag: string; // the technical name — hidden until the player commits, revealed after as the learning payoff
   desc: string; // what it does — shown BEFORE selection so the choice is reasoned, not guessed
   correct: boolean;
   note: string; // why right / what goes wrong — shown after the gate opens & in debrief
@@ -273,17 +273,17 @@ export default function Round2() {
         roundNum={2}
         title="The data gate"
         lines={[
-          "Three different AI systems are about to go live, each fed a different kind of data — customer tickets, your own source code, and job applications.",
-          "There's no universal checklist. The controls that protect one system are useless — or harmful — for another. Your job is to fit the right guardrails to each.",
+          "Three AI systems are about to go live — one reads customer tickets, one reads your source code, one reads job applications.",
+          "There's no one-size checklist: a control that protects one system is useless on another. Fit the right guardrails to each.",
         ]}
-        objective="For each of the three systems, read its prompt, the data it's about to receive, and the list of what could go wrong — then arm one control to neutralise each risk before opening the gate."
+        objective="For each system, read what it does and what could go wrong — then arm the controls that neutralise those exact risks before you open the gate."
         instructions={[
-          "Read the system prompt, the sample data, and the “what could go wrong here” list — those risks are your basis for choosing.",
-          "Arm one control for each risk (3 in total). Every control shows what it does; the wrong ones guard something else or are just an instruction to the model.",
-          "Open the gate. A control that doesn't address a listed risk lets data leak and costs points.",
-          "The risks — and so the right controls — differ every system. Don't reuse the last answer.",
-          "Be quick: the time left when you finish all three is added to your score.",
+          "Read the system's prompt, its sample data, and the “what could go wrong” list.",
+          "Arm one control per risk (3 in total). Each shows its guardrail name and what it does.",
+          "Open the gate. A wrong control leaks data and costs points — then every control explains why it fits or doesn't.",
+          "The risks differ every system — don't reuse the last answer.",
         ]}
+        compete="One clock runs across all three systems. Time left when you finish becomes bonus points — fastest correct players top the leaderboard."
         onStart={start}
         startLabel="Start"
       />
@@ -302,6 +302,56 @@ export default function Round2() {
         mistake: `${SCENARIOS.length - clearedRef.current} system(s) never ran safely in time.`,
         impact: "Sensitive work left stuck — and the pressure to “just ship it” is exactly how data ends up exposed.",
       });
+
+    // Untimed learning payoff: the full guardrail reference. During the round players race
+    // the clock and skip the inline notes — here, with no timer, they get every control laid
+    // out per system: which guardrails were the right fit and which weren't, and why.
+    const guardrailGuide = (
+      <div className="rounded-xl border border-line2 bg-panel2/40 overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-line2 flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wide text-acc font-semibold">
+          <Icon name="shield" /> Guardrail guide — every control, and why it fits or doesn't
+        </div>
+        <div className="px-4 py-3 flex flex-col gap-4">
+          {SCENARIOS.map((s) => {
+            const ordered = [...s.controls].sort((a, b) => Number(b.correct) - Number(a.correct));
+            return (
+              <div key={s.id}>
+                <div className="text-[12px] font-semibold text-ink mb-2">{s.question}</div>
+                <div className="flex flex-col gap-2">
+                  {ordered.map((c) => (
+                    <div key={c.id} className="flex gap-2 items-start">
+                      <span
+                        className={`mt-px shrink-0 w-[16px] h-[16px] rounded-[5px] flex items-center justify-center text-[10px] ${
+                          c.correct ? "bg-ok/15 text-ok" : "bg-crit/15 text-crit"
+                        }`}
+                      >
+                        <Icon name={c.correct ? "check" : "x"} />
+                      </span>
+                      <div className="flex-1 text-[11.5px] leading-snug">
+                        <span
+                          className={`inline-block font-mono text-[9px] uppercase tracking-wide border rounded px-1 py-px mr-1.5 align-middle ${
+                            c.correct ? "text-ok border-ok/50" : "text-ink3 border-line2"
+                          }`}
+                        >
+                          {c.tag}
+                        </span>
+                        <span className="text-ink font-medium">{c.label}.</span>{" "}
+                        <span className="text-ink2">{c.note}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          <p className="text-[11px] text-ink3 leading-relaxed border-t border-line pt-2.5">
+            Notice the tell: the same guardrail can be right in one system and wrong in another —{" "}
+            <b className="text-ink2">keeping a log</b> was a leak for support tickets but a requirement for hiring. Always ask what <i>this</i> data flow needs.
+          </p>
+        </div>
+      </div>
+    );
+
     return (
       <DebriefOverlay
         roundNum={2}
@@ -320,13 +370,14 @@ export default function Round2() {
         }))}
         learning="The right guardrails depend on the system. Notice the same control — keeping a log — was a leak for the support tickets but a requirement for the hiring decisions. Always ask what THIS data flow needs: what must the model not receive, what must it not keep, and who must stay accountable? And a written instruction (“be careful with data”) is never a real control."
         consequences={consequences}
+        extra={guardrailGuide}
         onReplay={start}
       />
     );
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-[1180px] mx-auto">
+    <div className="game-surface flex flex-col h-screen max-w-[1180px] mx-auto">
       <HudBar
         roundName="The data gate"
         timeLeft={timeLeft}
@@ -397,33 +448,34 @@ export default function Round2() {
                   <span className="w-2 h-2 rounded-sm bg-crit/60 border border-crit inline-block" /> sensitive
                 </span>
               </div>
-              <div className="px-3.5 pt-2 text-[10.5px] text-ink3">Exactly what the model would receive:</div>
+              <div className="px-3.5 pt-2 text-[10.5px] text-ink3">
+                Exactly what the model would receive — <span className="text-crit">dots mark sensitive data</span>:
+              </div>
               <div className="px-3.5 py-2.5 flex flex-col gap-0.5">
                 {sc.fields.map((f, i) => (
                   <div
                     key={i}
-                    className={`flex gap-3 items-start py-1.5 px-2 rounded-md border-l-2 ${
-                      f.risk ? "border-crit bg-crit/[0.07]" : "border-transparent"
-                    }`}
+                    className={`flex gap-3 items-start py-1.5 px-2 rounded-md ${f.risk ? "bg-crit/[0.06]" : ""}`}
                   >
-                    <span className="text-[10px] uppercase tracking-wide text-ink3 shrink-0 w-[88px] pt-0.5">{f.label}</span>
-                    <span className={`text-[12px] font-mono flex-1 break-words leading-snug ${f.risk ? "text-crit" : "text-ink"}`}>
-                      {f.value}
+                    <span className="text-[10px] uppercase tracking-wide text-ink3 shrink-0 w-[92px] pt-0.5 flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${f.risk ? "bg-crit" : "bg-transparent"}`} />
+                      {f.label}
                     </span>
+                    <span className="text-[12px] font-mono flex-1 break-words leading-snug text-ink">{f.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* the basis for choosing: this system's specific risks */}
-            <div className="rounded-xl border border-crit/40 bg-crit/5 overflow-hidden">
-              <div className="px-3.5 py-2 border-b border-crit/25 flex items-center gap-2 text-[11px] font-semibold text-crit uppercase tracking-wide">
-                <Icon name="alert" /> What could go wrong here
+            <div className="rounded-xl border border-warn/40 bg-warn/5 overflow-hidden">
+              <div className="px-3.5 py-2 border-b border-warn/25 flex items-center gap-2 text-[11px] font-semibold text-warn uppercase tracking-wide">
+                <Icon name="alert" /> What could go wrong here — arm one control per risk
               </div>
               <ol className="px-3.5 py-2.5 flex flex-col gap-2">
                 {sc.risks.map((r, i) => (
                   <li key={i} className="flex gap-2 text-[12px] leading-snug text-ink2">
-                    <span className="shrink-0 w-[16px] h-[16px] rounded-full bg-crit/15 text-crit flex items-center justify-center text-[9px] font-bold mt-px">
+                    <span className="shrink-0 w-[16px] h-[16px] rounded-full bg-warn/15 text-warn flex items-center justify-center text-[9px] font-bold mt-px">
                       {i + 1}
                     </span>
                     {r}
@@ -440,13 +492,18 @@ export default function Round2() {
               <h2 className="text-[15px] font-semibold">Arm one control for each risk</h2>
               <span className={`text-[12px] font-mono ${armedInScenario === CORRECT_PER ? "text-acc" : "text-ink3"}`}>{armedInScenario}/3 armed</span>
             </div>
-            <p className="text-[11.5px] text-ink3 mb-2.5">Pick the 3 that neutralise the risks on the left. The rest guard the wrong thing — or aren't real controls at all.</p>
+            <p className="text-[11.5px] text-ink3 mb-2.5">Go by what each control <i>does</i> — the rest guard the wrong thing, or aren't real controls at all. Open the gate to see why each one fits or doesn't.</p>
 
             <div className="grid gap-2 sm:grid-cols-2">
               {sc.controls.map((c) => {
                 const on = armed[c.id];
                 const mark = marks[c.id];
-                const good = mark === "right";
+                // After committing, show the verdict + note for ALL six controls (not just
+                // the ones picked) so every play ends with the full explanation of why each
+                // guardrail does or doesn't fit. The tag (the guardrail's name) is always
+                // visible — that's what players are here to learn.
+                const reveal = solved || !!mark;
+                const good = mark ? mark === "right" : c.correct;
                 return (
                   <button
                     key={c.id}
@@ -454,27 +511,31 @@ export default function Round2() {
                     disabled={solved}
                     className={[
                       "text-left rounded-xl border px-3 py-2.5 transition-all disabled:cursor-default",
-                      mark ? (good ? "border-ok bg-ok/10" : "border-crit bg-crit/10") : on ? "border-acc bg-acc/10" : "border-line2 bg-panel2 hover:border-acc2",
+                      reveal ? (good ? "border-ok bg-ok/10" : "border-crit bg-crit/10") : on ? "border-acc bg-acc/10" : "border-line2 bg-panel2 hover:border-acc2",
                     ].join(" ")}
                   >
                     <div className="flex items-start gap-2">
                       <span
                         className={[
                           "mt-0.5 w-[18px] h-[18px] rounded-[6px] shrink-0 flex items-center justify-center text-[12px] border",
-                          mark ? (good ? "bg-ok/20 border-ok text-ok" : "bg-crit/20 border-crit text-crit") : on ? "bg-acc/20 border-acc text-acc" : "border-line2 text-transparent",
+                          reveal ? (good ? "bg-ok/20 border-ok text-ok" : "bg-crit/20 border-crit text-crit") : on ? "bg-acc/20 border-acc text-acc" : "border-line2 text-transparent",
                         ].join(" ")}
                       >
-                        <Icon name={mark ? (good ? "check" : "x") : "check"} />
+                        <Icon name={reveal ? (good ? "check" : "x") : "check"} />
                       </span>
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-[12.5px] font-semibold leading-snug">{c.label}</span>
-                          <span className="text-[9.5px] font-mono uppercase tracking-wide text-ink3 border border-line2 rounded px-1 py-px shrink-0">
+                          <span
+                            className={`text-[9.5px] font-mono uppercase tracking-wide rounded px-1 py-px shrink-0 border ${
+                              reveal ? (good ? "text-ok border-ok/50" : "text-crit border-crit/50") : "text-ink3 border-line2"
+                            }`}
+                          >
                             {c.tag}
                           </span>
                         </div>
                         <div className="text-[11px] text-ink3 leading-snug mt-0.5">{c.desc}</div>
-                        {mark && <div className={`text-[10.5px] leading-snug mt-1 ${good ? "text-ok" : "text-crit"}`}>{c.note}</div>}
+                        {reveal && <div className={`text-[10.5px] leading-snug mt-1 ${good ? "text-ok" : "text-crit"}`}>{c.note}</div>}
                       </div>
                     </div>
                   </button>

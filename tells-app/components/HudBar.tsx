@@ -34,7 +34,7 @@ export function HudBar({
           <span>Time</span>
           <b className="font-mono text-ink">{mm}:{ss < 10 ? "0" : ""}{ss}</b>
         </div>
-        <div className="h-[7px] rounded bg-[#10151f] border border-line overflow-hidden w-[150px]">
+        <div className="h-[7px] rounded bg-panel2 border border-line overflow-hidden w-[150px]">
           <div className="h-full transition-all"
             style={{
               width: `${frac * 100}%`,

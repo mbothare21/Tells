@@ -104,16 +104,16 @@ export default function Round4() {
     return (
       <IntroOverlay roundNum={4} title="The review board"
         lines={[
-          "A few automated decisions got flagged for a human to look over. Each one was made by a system, and each one has a problem.",
-          "Read each case and say, in your own judgement, what went wrong with it.",
+          "Three automated decisions got flagged for a human to review. Each one was made by a system, and each one has a problem.",
+          "Read each case and say what went wrong.",
         ]}
-        objective="Act as the human check on three automated decisions. For each, identify the single governance failure that best explains what went wrong — unfair bias, no explanation, or a privacy violation."
+        objective="You're the human check. For each decision, pick the one governance failure that explains it — unfair bias, no explanation, or a privacy violation."
         instructions={[
-          "Read each case — what the automated system decided, and how it reached that decision.",
-          "Choose the one failure that best fits: unfair bias, no explanation given, or a privacy violation.",
-          "Your first answer locks in, so read the whole case before you choose.",
-          "You score +250 for each correct diagnosis, plus a bonus for the time left when you finish.",
+          "Read the case — what the system decided, and how it got there.",
+          "Pick the one failure that fits best: unfair bias, no explanation, or a privacy violation.",
+          "Your first answer locks in — read the whole case before you choose.",
         ]}
+        compete="+250 for each correct diagnosis, plus bonus points for the time left when you finish — fastest correct players top the leaderboard."
         onStart={start} startLabel="Start" />
     );
 
@@ -148,7 +148,7 @@ export default function Round4() {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-[1180px] mx-auto">
+    <div className="game-surface flex flex-col h-screen max-w-[1180px] mx-auto">
       <HudBar roundName="The review board" timeLeft={timeLeft} totalSeconds={ROUND_SECONDS} score={score} hint={<Hints hints={HINTS} onSpend={spendHint} />} />
       <ObjectiveBar
         maxW="max-w-[760px]"

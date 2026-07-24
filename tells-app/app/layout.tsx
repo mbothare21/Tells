@@ -8,6 +8,10 @@ import { SessionGuard } from "@/components/SessionGuard";
 import { Fullscreen } from "@/components/Fullscreen";
 import { MatrixRain } from "@/components/MatrixRain";
 import { Logo } from "@/components/Logo";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
+// Runs before paint so the saved theme is applied with no flash of the wrong colours.
+const themeInit = `(function(){try{var t=localStorage.getItem('tells-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
 
 export const metadata: Metadata = {
   title: "Tells",
@@ -17,6 +21,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
       <body>
         <MatrixRain />
         <Logo />
@@ -27,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <UserMenu />
           </AuthProvider>
         </GameProvider>
+        <ThemeToggle />
         <Fullscreen />
       </body>
     </html>

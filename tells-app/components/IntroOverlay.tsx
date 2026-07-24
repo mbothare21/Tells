@@ -10,6 +10,7 @@ interface IntroProps {
   objective?: string; // one clear sentence: what you're trying to achieve
   instructions?: string[]; // detailed, numbered "how to play" steps
   howto?: string; // legacy single quiet how-to line (used if instructions absent)
+  compete?: string; // optional competitive stakes line shown above Start
   onStart: () => void;
   startLabel?: string;
 }
@@ -21,6 +22,7 @@ export function IntroOverlay({
   objective,
   instructions,
   howto,
+  compete,
   onStart,
   startLabel = "Start",
 }: IntroProps) {
@@ -64,6 +66,13 @@ export function IntroOverlay({
         )}
 
         {!instructions && howto && <p className="text-ink3 text-[13px] leading-relaxed mb-5">{howto}</p>}
+
+        {compete && (
+          <div className="flex items-center gap-2 rounded-xl border border-line2 bg-panel2/50 px-4 py-2.5 mb-5 text-[12.5px] text-ink2">
+            <span className="text-ok"><Icon name="clock" /></span>
+            <span>{compete}</span>
+          </div>
+        )}
 
         <div className="text-center">
           <button

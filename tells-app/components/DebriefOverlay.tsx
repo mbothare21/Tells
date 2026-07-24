@@ -29,6 +29,7 @@ export function DebriefOverlay({
   rows,
   learning,
   consequences,
+  extra,
   onReplay,
 }: {
   roundNum: number;
@@ -38,6 +39,7 @@ export function DebriefOverlay({
   rows: DebriefRow[];
   learning?: React.ReactNode; // the purpose / core lesson of the round
   consequences?: Consequence[]; // shown only when the player made mistakes
+  extra?: React.ReactNode; // optional round-specific learning content (e.g. a full reference)
   onReplay: () => void;
 }) {
   const hasConsequences = consequences && consequences.length > 0;
@@ -102,6 +104,8 @@ export function DebriefOverlay({
             <p className="text-[13px] text-ink leading-relaxed">{learning}</p>
           </div>
         )}
+
+        {extra && <div className="mt-4">{extra}</div>}
 
         <div className="text-center mt-5 flex gap-2.5 justify-center flex-wrap pt-4 border-t border-line">
           <button onClick={onReplay} className="text-sm px-5 py-2.5 rounded-[10px] border border-line2 text-ink hover:border-acc2">

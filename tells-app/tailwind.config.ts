@@ -4,12 +4,25 @@ const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      // Colours are driven by CSS variables (channel triplets) so the whole UI
+      // can flip between dark and light via the data-theme attribute on <html>.
+      // See app/globals.css for the actual values per theme.
       colors: {
-        bg: "#080a10", panel: "#0e121b", panel2: "#0b0e16",
-        line: "#1b2230", line2: "#28324a",
-        ink: "#e8ecf5", ink2: "#8a95ac", ink3: "#4d5670",
-        acc: "#37e0c4", acc2: "#23b8a0", info: "#5aa2f5",
-        warn: "#f5b84a", danger: "#ff5d57", ok: "#54d98a", crit: "#ff3b30",
+        bg: "rgb(var(--c-bg) / <alpha-value>)",
+        panel: "rgb(var(--c-panel) / <alpha-value>)",
+        panel2: "rgb(var(--c-panel2) / <alpha-value>)",
+        line: "rgb(var(--c-line) / <alpha-value>)",
+        line2: "rgb(var(--c-line2) / <alpha-value>)",
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        ink2: "rgb(var(--c-ink2) / <alpha-value>)",
+        ink3: "rgb(var(--c-ink3) / <alpha-value>)",
+        acc: "rgb(var(--c-acc) / <alpha-value>)",
+        acc2: "rgb(var(--c-acc2) / <alpha-value>)",
+        info: "rgb(var(--c-info) / <alpha-value>)",
+        warn: "rgb(var(--c-warn) / <alpha-value>)",
+        danger: "rgb(var(--c-danger) / <alpha-value>)",
+        ok: "rgb(var(--c-ok) / <alpha-value>)",
+        crit: "rgb(var(--c-crit) / <alpha-value>)",
       },
       fontFamily: {
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],

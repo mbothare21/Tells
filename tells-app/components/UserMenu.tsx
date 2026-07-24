@@ -38,7 +38,7 @@ export function UserMenu() {
     <>
       {open && <button className="fixed inset-0 z-[89] cursor-default" aria-hidden onClick={() => setOpen(false)} />}
 
-      <div className="fixed top-2.5 right-3 z-[90]">
+      <div className="no-print fixed top-2.5 right-3 z-[90]">
         <button
           onClick={() => setOpen((o) => !o)}
           title={user.name}

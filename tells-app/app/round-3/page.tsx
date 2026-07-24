@@ -486,16 +486,16 @@ export default function Round3() {
         roundNum={3}
         title="Face value"
         lines={[
-          "Three things have landed on your desk today, and all of them look perfectly fine. One at a time, you'll decide what you can actually trust.",
-          "It gets harder as you go: first, did a person or an AI write this? Then, is this job applicant a real person? Finally, is this AI-written article safe to publish? One clock covers all three.",
+          "Three things have landed on your desk, and all of them look fine. One at a time, you decide what you can actually trust.",
+          "It gets harder as you go — and one clock covers all three.",
         ]}
-        objective="Work out what you can actually trust across three escalating checks — is this text human or AI, is this applicant real, and is this AI-written article safe to publish — and clear all three before the shared clock runs out."
+        objective="Clear three escalating checks: is this text human or AI, is this applicant real, and is this AI-written article safe to publish?"
         instructions={[
-          "Test 1: read each writing sample and call it Human, AI, or “can't tell”. Being honest about genuine uncertainty scores highest.",
-          "Test 2: inspect the applicant's file, flag anything fabricated, and pick the reason it's fake. Flagging a genuine item costs you.",
-          "Test 3: read the article, flag each section carrying a hidden instruction, and say why — the right flag with the wrong reason only scores half.",
-          "One clock covers all three, later tests are worth more, and the time left when you finish is added to your score — keep moving.",
+          "Test 1 — read each writing sample and call it Human, AI, or “can't tell”. Honest uncertainty scores highest.",
+          "Test 2 — inspect the applicant's file, flag anything fabricated, and pick why it's fake. Flagging a genuine item costs you.",
+          "Test 3 — flag each article section that hides an instruction, and say why. A right flag with the wrong reason scores half.",
         ]}
+        compete="One clock covers all three and later tests are worth more. Time left when you finish becomes bonus points — fastest correct players top the leaderboard."
         onStart={start}
         startLabel="Start"
       />
@@ -569,7 +569,7 @@ export default function Round3() {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-[1180px] mx-auto">
+    <div className="game-surface flex flex-col h-screen max-w-[1180px] mx-auto">
       <HudBar
         roundName="Face value"
         timeLeft={timeLeft}

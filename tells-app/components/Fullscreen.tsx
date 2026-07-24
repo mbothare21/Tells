@@ -49,7 +49,7 @@ export function Fullscreen() {
       onClick={toggle}
       title={isFs ? "Exit fullscreen" : "Go fullscreen"}
       aria-label={isFs ? "Exit fullscreen" : "Go fullscreen"}
-      className="fixed bottom-3 right-3 z-[150] w-9 h-9 rounded-lg border border-line2 bg-panel2/80 backdrop-blur text-ink2 hover:text-ink hover:border-acc2 flex items-center justify-center"
+      className="no-print fixed bottom-3 right-3 z-[150] w-9 h-9 rounded-lg border border-line2 bg-panel2/80 backdrop-blur text-ink2 hover:text-ink hover:border-acc2 flex items-center justify-center"
     >
       <Icon name={isFs ? "shrink" : "expand"} />
     </button>
